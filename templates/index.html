@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>stocks</title>
+    <!-- Use Semantic UI CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css"
+    />
+    <script
+      src="https://code.jquery.com/jquery-3.1.1.min.js"
+      integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="ui container">
+    <h1>Stock List</h1>
+
+    <form method="get">
+      <select name="filter">
+        <option value="">All Stocks</option>
+        <option value="new_intraday_highs">New Intraday Highs</option>
+        <option value="new_closing_highs">New Closing Highs</option>
+        <option value="new_intraday_lows">New Intraday Lows</option>
+        <option value="new_closing_lows">New Closing Lows</option>
+      </select>
+      <input type="submit" />
+    </form>
+    
+       <table class="ui striped table">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stock in stocks %}
+        <tr>
+          <td>{{ stock.id }}</td>
+          <td>{{ stock.symbol }}</td>
+          <td><a href="/stock/{{ stock.symbol }}">{{ stock.name }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+   
+
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
+  </body>
+</html>
