@@ -1,5 +1,7 @@
 import sqlite3, config
 import alpaca_trade_api as tradeapi
+from datetime import date
+import tulipy, numpy
 
 connection = sqlite3.connect(config.DB_FILE)
 connection.row_factory = sqlite3.Row
@@ -54,12 +56,27 @@ for i in range(0, len(symbols), chunk_size):
         
         for symbol in barsets:
             print(f"Processing {symbol} with {len(barsets[symbol])} bars")
+
+            print(barsets[symbol])
+
+            recent_closes = [bar.c for bar in barsets[symbol]]
+            
+            
+
             for bar in barsets[symbol]:
                 stock_id = stock_dict[symbol]
+
+                if len(recent_closes) >= 50 and date.today().isoformat() == bar.t.date().isoformat():
+                   sma_20 = tulipy.sma(numpy.array(recent_closes), period=20)[-1]
+                   sma_50 = tulipy.sma(numpy.array(recent_closes), period=50)[-1]
+                   rsi_14 = tulipy.rsi(numpy.array(recent_closes), period=14)[-1]
+                else:
+                   sma_20, sma_50, rsi_14 = None, None, None
+
                 cursor.execute("""
-                    INSERT INTO stock_price (stock_id, date, open, high, low, close, volume)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (stock_id, bar.t.date(), bar.open, bar.high, bar.low, bar.close, bar.volume))
+                    INSERT INTO stock_price (stock_id, date, open, high, low, close, volume, sma_20, sma_50, rsi_14)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (stock_id, bar.t.date(), bar.open, bar.high, bar.low, bar.close, bar.volume, sma_20, sma_50, rsi_14))
     except Exception as e:
         print(f"Error processing chunk {i}: {str(e)}")
         continue
