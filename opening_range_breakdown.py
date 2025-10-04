@@ -4,7 +4,7 @@ import config
 import alpaca_trade_api as tradeapi
 import smtplib, ssl
 from datetime import datetime
-import pytz
+#import pytz
 from timezone import is_dst
 
 context = ssl.create_default_context()
@@ -15,7 +15,7 @@ connection.row_factory = sqlite3.Row
 cursor = connection.cursor()
 
 cursor.execute("""
-    select id from strategy where name = 'opening_range_breakout'               
+    select id from strategy where name = 'opening_range_breakdown'               
 """)
 
 strategy_id = cursor.fetchone()['id']
@@ -107,35 +107,35 @@ for symbol in symbols:
         after_opening_range_mask = (minute_bars.index > end_minute_bar)
         after_opening_range_bars = minute_bars.loc[after_opening_range_mask]
 
-        after_opening_range_breakout = after_opening_range_bars[
-            after_opening_range_bars['close'] > opening_range_high
+        after_opening_range_breakdown = after_opening_range_bars[
+            after_opening_range_bars['close'] < opening_range_low
         ]
 
-        if not after_opening_range_breakout.empty:
+        if not after_opening_range_breakdown.empty:
             if symbol not in existing_order_symbols:
-                limit_price = round(float(after_opening_range_breakout.iloc[0]['close']), 2)
+                limit_price = round(float(after_opening_range_breakdown.iloc[0]['close']), 2)
                 take_profit_price = round(limit_price + opening_range, 2)
                 stop_loss_price = round(limit_price - opening_range, 2)
 
-                messages.append(f"Placing order for {symbol} at {limit_price}, closed_above {opening_range_high} \n\n {after_opening_range_breakout.iloc[0]}\n\n")
+                message = f"Selling short {symbol} at {limit_price}, closed_below {opening_range_low} \n\n {after_opening_range_breakdown.iloc[0]}\n\n"
+                messages.append(message)
 
-                print(f"Placing order for {symbol} at {limit_price}, closed_above {opening_range_high} at {after_opening_range_breakout.iloc[0]}")
-                print(f"Take profit: {take_profit_price}, Stop loss: {stop_loss_price}")
+                print(message)
 
                 try:
                     api.submit_order(
                         symbol=symbol,
-                        side='buy',
+                        side='sell',
                         type='limit',
                         qty='100',
                         time_in_force='day',
                         order_class='bracket',
                         limit_price=limit_price,
                         take_profit=dict(
-                            limit_price=take_profit_price,
+                            limit_price=limit_price - opening_range,
                         ),
                         stop_loss=dict(
-                            stop_price=stop_loss_price
+                            stop_price=limit_price + opening_range
                         )
                     )
                 except Exception as e:
