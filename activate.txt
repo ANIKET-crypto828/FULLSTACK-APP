@@ -1,0 +1,3 @@
+(.venv) PS E:\FULLSTACK-APP> & E:/FULLSTACK-APP/.venv/Scripts/Activate.ps1R
+
+(.venv) PS E:\FULLSTACK-APP> python populate_prices.py  
