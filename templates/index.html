@@ -1,22 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>stocks</title>
-    <!-- Use Semantic UI CDN -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css"
-    />
-    <script
-      src="https://code.jquery.com/jquery-3.1.1.min.js"
-      integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
-      crossorigin="anonymous"
-    ></script>
-  </head>
-  <body>
-    <div class="ui container">
+{% extends "layout.html" %}
+
+{% block content %}
       <h1>Stock List</h1>
 
       <form method="get">
@@ -25,7 +9,14 @@
         <select name="filter">
           <option value="">All Stocks</option>
           <option {% if request.query_params.filter == "new_closing_highs" %}selected="selected"{% endif %} value="new_closing_highs">New Closing Highs</option>
-          <option value="new_closing_lows">New Closing Lows</option>
+          <option {% if request.query_params.filter == "new_closing_lows" %}selected="selected"{% endif %} value="new_closing_lows">New Closing Lows</option>
+          <option {% if request.query_params.filter == "rsi_overbought" %}selected="selected"{% endif %} value="rsi_overbought">RSI Overbought</option>
+          <option {% if request.query_params.filter == "rsi_oversold" %}selected="selected"{% endif %} value="rsi_oversold">RSI Oversold</option>
+          <option {% if request.query_params.filter == "above_sma_20" %}selected="selected"{% endif %} value="above_sma_20">Above 20 SMA</option>
+          <option {% if request.query_params.filter == "below_sma_20" %}selected="selected"{% endif %} value="below_sma_20">Below 20 SMA</option>
+          <option {% if request.query_params.filter == "above_sma_50" %}selected="selected"{% endif %} value="above_sma_50">Above 50 SMA</option>
+          <option {% if request.query_params.filter == "below_sma_50" %}selected="selected"{% endif %} value="below_sma_50">Below 50 SMA</option>
+
         </select>
         <input type="submit" />
       </form>
@@ -69,8 +60,4 @@
           {% endfor %}
         </tbody>
       </table>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
-  </body>
-</html>
+{% endblock %}

@@ -4,6 +4,8 @@ from fastapi.responses import RedirectResponse
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, date
+import alpaca_trade_api as tradeapi
+
 
 current_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -28,7 +30,7 @@ def index(request: Request):
                 group by stock_id
                 order by symbol
             ) where date = (select max(date) from stock_price)
-        """, (date.today().isoformat(),))
+        """)
     elif stock_filter == "new_closing_lows":
              cursor.execute("""
         select * from (
@@ -37,7 +39,55 @@ def index(request: Request):
                 group by stock_id
                 order by symbol
             ) where date = (select max(date) from stock_price)
-        """, (date.today().isoformat(),))
+        """)
+    elif stock_filter == "rsi_overbought":
+        cursor.execute("""
+                select symbol, name, stock_id, date
+                from stock_price join stock on stock.id = stock_price.stock_id
+                where rsi_14 > 70
+                AND date = (select max(date) from stock_price)
+                order by symbol
+        """)
+    elif stock_filter == "rsi_oversold":
+        cursor.execute("""
+                select symbol, name, stock_id, date
+                from stock_price join stock on stock.id = stock_price.stock_id
+                where rsi_14 < 30
+                AND date = (select max(date) from stock_price)
+                order by symbol
+        """)
+    elif stock_filter == "above_sma_20":
+        cursor.execute("""
+                select symbol, name, stock_id, date
+                from stock_price join stock on stock.id = stock_price.stock_id
+                where close > sma_20
+                AND date = (select max(date) from stock_price)
+                order by symbol
+        """)
+    elif stock_filter == "below_sma_20":
+        cursor.execute("""
+                select symbol, name, stock_id, date
+                from stock_price join stock on stock.id = stock_price.stock_id
+                where close < sma_20
+                AND date = (select max(date) from stock_price)
+                order by symbol
+        """)
+    elif stock_filter == "above_sma_50":
+        cursor.execute("""
+                select symbol, name, stock_id, date
+                from stock_price join stock on stock.id = stock_price.stock_id
+                where close > sma_50
+                AND date = (select max(date) from stock_price)
+                order by symbol
+        """)
+    elif stock_filter == "below_sma_50":
+        cursor.execute("""
+                select symbol, name, stock_id, date
+                from stock_price join stock on stock.id = stock_price.stock_id
+                where close < sma_50
+                AND date = (select max(date) from stock_price)
+                order by symbol
+        """)
     else:
         cursor.execute("""
             SELECT id, symbol, name FROM stock ORDER BY symbol
@@ -107,6 +157,35 @@ def apply_strategy(strategy_id: int = Form(...), stock_id: int = Form(...)):
     connection.commit()
 
     return RedirectResponse(url=f"/strategy/{strategy_id}", status_code=303, headers={"message": "Strategy applied successfully"})
+
+@app.get("/strategies")
+def strategies(request: Request):
+    connection = sqlite3.connect(config.DB_FILE)
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT * FROM strategy
+    """)
+
+    strategies = cursor.fetchall()
+
+    return templates.TemplateResponse(
+        "strategies.html",
+        {"request": request, "strategies": strategies}
+    )
+
+@app.get("/orders")
+def orders(request: Request):
+    
+    api = tradeapi.REST(config.API_KEY, config.SECRET_KEY, base_url=config.API_URL)
+
+    orders = api.list_orders(status='all')
+
+    return templates.TemplateResponse(
+        "orders.html",
+        {"request": request, "orders": orders}
+    )
 
 @app.get("/strategy/{strategy_id}")
 def strategy(request: Request, strategy_id: int):
